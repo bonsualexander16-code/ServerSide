@@ -1,16 +1,15 @@
 FROM node:18-slim
 
-# Install system dependencies
+# Install system dependencies (including yt-dlp from apt instead of pip)
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         ffmpeg \
         python3 \
         python3-pip \
-        ca-certificates && \
+        ca-certificates \
+        curl \
+        yt-dlp && \
     rm -rf /var/lib/apt/lists/*
-
-# Install yt-dlp safely
-RUN pip3 install --no-cache-dir -U yt-dlp
 
 # Set working directory
 WORKDIR /app
@@ -21,11 +20,11 @@ COPY package*.json ./
 # Install Node dependencies
 RUN npm install --omit=dev
 
-# Copy rest of the app
+# Copy app source
 COPY . .
 
-# Expose port
+# Expose your app port
 EXPOSE 5000
 
-# Start app
+# Start server
 CMD ["npm", "start"]
