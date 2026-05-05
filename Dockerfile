@@ -1,30 +1,31 @@
 FROM node:18-slim
 
-ENV NODE_ENV=production
-ENV NPM_CONFIG_LOGLEVEL=error
-
-# Install system deps + yt-dlp in one layer
+# Install system dependencies
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends ffmpeg python3 python3-pip && \
-    pip3 install -U --no-cache-dir yt-dlp && \
+    apt-get install -y --no-install-recommends \
+        ffmpeg \
+        python3 \
+        python3-pip \
+        ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
+# Install yt-dlp safely
+RUN pip3 install --no-cache-dir -U yt-dlp
+
+# Set working directory
 WORKDIR /app
 
-# Copy package files first (cache optimization)
+# Copy package files first (better caching)
 COPY package*.json ./
-RUN npm ci --omit=dev
 
-# Copy rest of app
+# Install Node dependencies
+RUN npm install --omit=dev
+
+# Copy rest of the app
 COPY . .
 
-# Create non-root user and fix permissions
-RUN useradd -m -u 1001 appuser && \
-    mkdir -p /app/downloads && \
-    chown -R appuser:appuser /app
-
-USER appuser
-
+# Expose port
 EXPOSE 5000
 
+# Start app
 CMD ["npm", "start"]
